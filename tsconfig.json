@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "target": "ES2022",
+        "outDir": "dist",
+        "module": "commonjs",
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "typeRoots": [
+            "node_modules/@types",
+            "./typings"
+        ],
+        "types": [
+            "node",
+        ],
+    },
+    "include": [
+        "./src/**/*",
+        "./typings/**/*.d.ts",
+        "index.d.ts",
+        "package.json"
+    ],
+}

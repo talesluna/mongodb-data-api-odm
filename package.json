@@ -1,0 +1,28 @@
+{
+  "name": "mongodb-data-api-odm",
+  "version": "1.0.0",
+  "description": "An ODM implementation for Atlas MongoDB Data API",
+  "main": "src/index.js",
+  "types": "./index.d.ts",
+  "typings": "./index.d.ts",
+  "scripts": {
+    "build": "rm -rf dist; tsc --build;npm run copy-files",
+    "copy-files": "cp -r ./typings dist; cp index.d.ts README.md LICENSE dist",
+    "test": "jest"
+  },
+  "keywords": [
+    "mongo",
+    "mongodb",
+    "atlas",
+    "data-api"
+  ],
+  "author": "Tales Luna <tales.ferreira.luna@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.9",
+    "typescript": "^5.1.6"
+  }
+}
