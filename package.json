@@ -1,6 +1,6 @@
 {
   "name": "mongodb-data-api-odm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An ODM implementation for Atlas MongoDB Data API",
   "main": "src/index.js",
   "types": "./index.d.ts",
@@ -18,11 +18,17 @@
   ],
   "author": "Tales Luna <tales.ferreira.luna@gmail.com>",
   "license": "MIT",
-  "dependencies": {
-    "axios": "^1.4.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.4.9",
     "typescript": "^5.1.6"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/talesluna/mongodb-data-api-odm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/talesluna/mongodb-data-api-odm/issues"
+  },
+  "homepage": "https://github.com/talesluna/mongodb-data-api-odm#readme"
 }

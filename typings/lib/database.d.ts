@@ -25,7 +25,7 @@ declare namespace Database {
     }
 
     interface IInstance {
-        public getCollection<T = never>(target: Collection.EntityConstructor<T>): Collection.IInstance<T>;
+        getCollection<T = never>(target: Collection.EntityConstructor<T>): Collection.IInstance<T>;
     }
 
 }
