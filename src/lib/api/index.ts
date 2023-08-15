@@ -1,5 +1,5 @@
-import axios, { AxiosError } from 'axios';
 import { ApiError } from './error';
+import axios, { AxiosError } from 'axios';
 
 export class Api implements Api.IInstance {
 
