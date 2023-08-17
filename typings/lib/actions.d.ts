@@ -25,6 +25,7 @@ declare namespace ApiActions {
         $or?: OperationFilters<T>[];
         $and?: OperationFilters<T>[];
         $nor?: OperationFilters<T>[];
+        [k: string]: Operators | NotExpression | BaseTypes
     };
 
     type Sort<T = never> = Partial<Record<keyof T, -1 | 1>>;
@@ -88,7 +89,9 @@ declare namespace ApiActions {
 
 declare namespace ApiActionResponses {
 
-    type Doc<T> = T & { _id: string };
+    type Doc<T> = T & {
+        _id: string;
+    };
 
     interface IFind<T> {
         documents: Doc<T>[];

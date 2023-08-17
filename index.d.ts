@@ -2,5 +2,5 @@
 declare module 'mongodb-data-api-odm' {
     const Database: Database.IConstructor;
     const Collection: (name: string) => <L>(target: Collection.EntityConstructor<L>) => void;
-    const Field: (config?: Collection.EntityField) => (target: any, key: string) => void;
+    const Field: (config?: Partial<Collection.EntityField>) => (target: any, key: string) => void;
 }

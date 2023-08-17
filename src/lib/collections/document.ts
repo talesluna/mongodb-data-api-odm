@@ -1,35 +1,62 @@
 export class CollectionDocument<T> {
 
-    private entity: Collection.Entity;
+    public static create<T>(target: Collection.EntityConstructor<T>, data: Record<string, any>): Collection.Doc<T> {
 
-    constructor(private target: Collection.EntityConstructor<T>) {
-        this.entity = target.__entity__!;
-    }
+        const doc = new target();
 
-    /**
-     * 
-     * @param data
-     * @returns
-     */
-    public parse<L>(data: L): L {
-        if (Array.isArray(data)) {
-            return data.map(data => this.parse(data)) as L;
-        }
+        const entity = target.__entity__!;
 
-        const doc = new this.target();
-        Object.keys(this.entity.fields).forEach(field => {
+        Object.keys(entity.fields).forEach(field => {
 
-            const value = (data as never)[field];
-            const config = this.entity.fields[field];
+            const { name, required } = entity.fields[field];
 
-            if (!value && config.required) {
-                throw new Error(`${this.entity.name}.${field} is required`);
+            const value = (data as never)[name];
+
+            if (!value && required) {
+                throw new Error(`${entity.name}.${field} is required`);
             }
 
             Object.defineProperty(doc, field, { value, writable: false });
 
         });
 
-        return doc as never as L;
+        Object.defineProperties(doc, {
+            toObject: {
+                writable: false,
+                enumerable: true,
+                value({ getters }: { getters?: boolean } = {}) {
+                    const data: Record<string, any> = {};
+
+                    Object.keys(doc as never).forEach(key => {
+                        if (typeof (doc as never)[key] !== 'function') {
+                            data[key] = (doc as never)[key];
+                        }
+                    });
+
+                    if (getters) {
+                        const proto = Object.getPrototypeOf(doc);
+                        Object.getOwnPropertyNames(proto).forEach(key => {
+                            const desc = Object.getOwnPropertyDescriptor(proto, key);
+                            if (typeof desc?.get === 'function') {
+                                data[key] = desc.get.apply(doc);
+                            }
+                        });
+                    }
+
+                    return data;
+                }
+            },
+            toOriginal: {
+                writable: false,
+                enumerable: true,
+                value() {
+                    return data;
+                }
+            },
+        });
+
+        return doc as never;
+
     }
+
 }
