@@ -7,9 +7,10 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
      * @param target
      * @param api
      */
-    constructor(private target: Collection.EntityConstructor<T>, private api: Api.IInstance) {}
+    constructor(private target: Collection.EntityConstructor<T>, private api: Api.IInstance) { }
 
-    public async insert(document: Collection.DocIn<T>) {
+    public async insert(data: Collection.DocIn<T>) {
+        const document = this.getInsertionDoc(data);
         const response = await this.api.insert(this.getActionPayload({ document }));
         return this.getDoc({ ...document, _id: response.insertedId });
     }
@@ -18,7 +19,8 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
         return this.insert(data);
     }
 
-    public async insertMany(documents: Collection.DocIn<T>[]) {
+    public async insertMany(data: Collection.DocIn<T>[]) {
+        const documents = data.map(doc => this.getInsertionDoc(doc));
         const response = await this.api.insertMany(this.getActionPayload({ documents }));
         return response.insertedIds.map((_id, index) => this.getDoc({ _id, ...documents[index] }));
     }
@@ -34,7 +36,7 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
     }
 
     public async findById($oid: string, projection?: ApiActions.Projection) {
-        return this.findOne({ _id: { $oid }}, projection);
+        return this.findOne({ _id: { $oid } }, projection);
     }
 
     public async updateOne(filter: ApiActions.Filter, data: Collection.DocIn<T>) {
@@ -43,7 +45,7 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
     }
 
     public updateById($oid: string, data: Collection.DocIn<T>) {
-        return this.updateOne({ _id: { $oid }}, data);
+        return this.updateOne({ _id: { $oid } }, data);
     }
 
     public async updateMany(filter: ApiActions.Filter, data: Collection.DocIn<T>) {
@@ -58,7 +60,7 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
 
     public async findOneAndUpdate(filter: ApiActions.Filter, data: Collection.DocIn<T>) {
         const doc = await this.findOne(filter, { _id: true });
-        return this.findByIdAndUpdate((doc as any)._id, data);
+        return doc ? this.findByIdAndUpdate(doc.toOriginal()._id, data) : null;
     }
 
     public async deleteOne(filter: ApiActions.Filter) {
@@ -83,19 +85,28 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
 
     public async findOneAndDelete(filter: ApiActions.Filter) {
         const data = await this.findOne(filter, { _id: true });
-        const deletion = data ? await this.deleteById((data as any)._id) : null;
+        const deletion = data ? await this.deleteById(data.toOriginal()._id) : null;
         return deletion ? data : null;
     }
 
-
     /**
-     * Construct the document result isnatnce
+     * Construct the document result instance
      *
      * @param docuemnt
      * @returns 
      */
     private getDoc<L>(docuemnt: L & { _id: string }) {
         return CollectionDocument.create<T>(this.target, docuemnt);
+    }
+
+    /**
+    * Return document fields for insertion
+    *
+    * @param docuemnt
+    * @returns 
+    */
+    private getInsertionDoc<L>(docuemnt: L & { _id?: undefined }) {
+        return CollectionDocument.parseFields<T>(this.target, docuemnt, true);
     }
 
     /**

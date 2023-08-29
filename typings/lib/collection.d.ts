@@ -17,10 +17,10 @@ declare namespace Collection {
 
     type Doc<T> = T & {
         toObject(options?: { getters?: boolean }): T;
-        toOriginal<D>(): D;
+        toOriginal<D = { _id: string }>(): D;
     };
 
-    type DocIn<T> = Omit<T, '_id'>;
+    type DocIn<T> = Omit<Partial<T>, '_id'>;
 
     interface IConstructor<T> {
         new(target: Collection.EntityConstructor<T>, api: Api.IInstance): IInstance<T>;
