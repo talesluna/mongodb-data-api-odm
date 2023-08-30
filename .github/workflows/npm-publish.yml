@@ -9,20 +9,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+
+      - name: Node Version
+        uses: actions/setup-node@v3
         with:
           node-version: 20
-      - run: npm ci
-      - run: npm test
-      - run: PACKAGE_NAME=$(cat package.json | grep 'name' | cut -d '"' -f 4)
-      - run: PACKAGE_VERSION=$(cat package.json | grep 'version' | cut -d '"' -f 4)-${{github.run_number}};
-      - run: npm version $PACKAGE_VERSION
-      - run: npm run build
+      
+      - name: Install dependencies (CI)
+        run: npm ci
+
+      - name: Run Unit Tests
+        run: npm test
+      
+      - name: Define package variables (name-version)
+        run: |
+            #bash
+            cat package.json | grep 'name' | cut -d '"' -f 4 >> $PACKAGE_NAME
+            cat package.json | grep 'version' | cut -d '"' -f 4)-${{github.run_number}} >> $PACKAGE_VERSION
+            echo $PACKAGE_NAME-$PACKAGE_VERSION
+            npm version $PACKAGE_VERSION
+
+      - name: Build
+        run: npm run build
+
       - run: npm pack ./dist
       - uses: actions/upload-artifact@v3
         with:
           name: package
-          path: ${{env.PACKAGE_NAME}}-${{env.PACKAGE_VERSION}}.tgz"
+          path: ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}.tgz"
     
   Publish:
     needs: Package
