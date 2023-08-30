@@ -24,9 +24,9 @@ jobs:
       - name: Define package variables (name-version)
         run: |
             #bash
-            cat package.json | grep 'name' | cut -d '"' -f 4 >> $PACKAGE_NAME
-            cat package.json | grep 'version' | cut -d '"' -f 4)-${{github.run_number}} >> $PACKAGE_VERSION
-            echo $PACKAGE_NAME-$PACKAGE_VERSION
+            PACKAGE_NAME=$(cat package.json | grep 'name' | cut -d '"' -f 4)
+            PACKAGE_VERSION=$(cat package.json | grep 'version' | cut -d '"' -f 4)-${{github.run_number}}
+            echo "PACKAGE_FILE=$PACKAGE_NAME-$PACKAGE_VERSION.tgz" >> $GITHUB_ENV
             npm version $PACKAGE_VERSION
 
       - name: Build
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: package
-          path: ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}.tgz"
+          path: ${{ env.PACKAGE_FILE }}.tgz"
     
   Publish:
     needs: Package
