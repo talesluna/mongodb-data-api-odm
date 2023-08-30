@@ -308,6 +308,57 @@ describe('Collection', () => {
     
                 });
 
+                test('Should not update because document was not found by findOne', async () => {
+    
+                    const mockFilter = {
+                        customer: mockDocument.customer,
+                    };
+    
+                    const mockChanges: Partial<MockCollection> = {
+                        age: mockDocument.age + 1,
+                    }
+    
+                    spyApiFindOne.mockResolvedValue({ document: null });
+
+                    const result = await mockCollection.findOneAndUpdate(mockFilter, mockChanges);
+    
+                    expect(result).toBeNull();
+                    expect(spyApiFindOne).toHaveBeenCalledWith(mockCollection['getActionPayload']({
+                        filter: mockFilter,
+                        projection: {
+                            _id: true,
+                        }
+                    }));
+
+                    expect(spyApiUpdateOne).not.toHaveBeenCalled();
+    
+                });
+
+                test('Should not update because document not exists', async () => {
+    
+                    const mockChanges: Partial<MockCollection> = {
+                        age: mockDocument.age + 1,
+                    }
+    
+                    spyApiUpdateOne.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
+
+                    const result = await mockCollection.findByIdAndUpdate(mockDocument._id, mockChanges);
+    
+                    expect(result).toBeNull();
+                    expect(spyApiFindOne).not.toHaveBeenCalled();
+                    expect(spyApiUpdateOne).toHaveBeenCalledWith(mockCollection['getActionPayload']({
+                        filter: {
+                            _id: {
+                                $oid: mockDocument._id,
+                            }
+                        },
+                        update: {
+                            $set: mockChanges
+                        },
+                    }));
+    
+                });
+
             });
 
         });
@@ -413,6 +464,48 @@ describe('Collection', () => {
     
                 });
     
+                test('Should not delete one bacause no document was found on find', async () => {
+
+                    const mockFilter = {
+                        customer: 'parker',
+                    }
+    
+                    spyApiFindOne.mockResolvedValue({ document: null });
+
+                    const result = await mockCollection.findOneAndDelete(mockFilter);
+    
+                    expect(result).toBeNull();
+                    expect(spyApiFindOne).toHaveBeenCalledWith(mockCollection['getActionPayload']({
+                        filter: mockFilter,
+                        projection: {
+                            _id: true,
+                        }
+                    }));
+
+                    expect(spyApiDeleteOne).not.toHaveBeenCalled();
+    
+                });
+    
+                test('Should not delete by id bacause no document was found on findById', async () => {
+    
+                    spyApiFindOne.mockResolvedValue({ document: null });
+
+                    const result = await mockCollection.findByIdAndDelete(mockDocument._id);
+    
+                    expect(result).toBeNull();
+                    expect(spyApiFindOne).toHaveBeenCalledWith(mockCollection['getActionPayload']({
+                        filter: {
+                            _id: {
+                                $oid: mockDocument._id,
+                            }
+                        },
+                    }));
+
+                    expect(spyApiDeleteOne).not.toHaveBeenCalled();
+    
+                });
+    
+
             });
 
         });
