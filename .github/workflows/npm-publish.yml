@@ -33,13 +33,15 @@ jobs:
         run: npm run build
 
       - name: Pack
-        run: npm pack ./dist
+        run: |
+          npm pack ./dist
+          mv $PACKAGE_FILE package.tgz
 
       - name: Upload package file
         uses: actions/upload-artifact@v3
         with:
           name: package
-          path: ${{ env.PACKAGE_FILE }}
+          path: package.tgz
     
   Publish:
     needs: Package
@@ -49,7 +51,6 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: package
-          path: package
 
       - name: Node Version
         uses: actions/setup-node@v3
@@ -57,8 +58,8 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org/
 
-      # - name: Decompress package file
-      #   run: tar -xf package.tgz
+      - name: Decompress package file
+        run: tar -xf package.tgz
 
       - run: du -h .
       - run: ls package
