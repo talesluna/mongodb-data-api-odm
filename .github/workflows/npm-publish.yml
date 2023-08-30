@@ -44,6 +44,7 @@ jobs:
           path: package.tgz
     
   Publish:
+    environment: NPM Publish
     needs: Package
     runs-on: ubuntu-latest
     steps:
