@@ -49,7 +49,7 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: package
-          path: package.tgz
+          path: package
 
       - name: Node Version
         uses: actions/setup-node@v3
@@ -57,9 +57,10 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org/
 
-      - name: Decompress package file
-        run: tar -xf package.tgz
+      # - name: Decompress package file
+      #   run: tar -xf package.tgz
 
-      - run: du .
+      - run: du -h .
+      - run: ls package
         # env:
           # NODE_AUTH_TOKEN: ${{secrets.npm_token}}
