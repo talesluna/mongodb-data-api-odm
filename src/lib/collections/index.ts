@@ -2,45 +2,41 @@ import { CollectionDocument } from './document';
 
 export class Collection<T = unknown> implements Collection.IInstance<T> {
 
-    private name: string;
-    private document: CollectionDocument<T>;
-
     /**
      *
      * @param target
      * @param api
      */
-    constructor(target: Collection.EntityConstructor<T>, private api: Api.IInstance) {
-        this.name = target.__entity__?.name!;
-        this.document = new CollectionDocument(target);
-    }
+    constructor(private target: Collection.EntityConstructor<T>, private api: Api.IInstance) { }
 
-    public async insert(document: Collection.DocIn<T>) {
+    public async insert(data: Collection.DocIn<T>) {
+        const document = this.getInsertionDoc(data);
         const response = await this.api.insert(this.getActionPayload({ document }));
-        return this.document.parse({ ...document, _id: response.insertedId });
+        return this.getDoc({ ...document, _id: response.insertedId });
     }
 
     public async create(data: Collection.DocIn<T>) {
         return this.insert(data);
     }
 
-    public async insertMany(documents: Collection.DocIn<T>[]) {
+    public async insertMany(data: Collection.DocIn<T>[]) {
+        const documents = data.map(doc => this.getInsertionDoc(doc));
         const response = await this.api.insertMany(this.getActionPayload({ documents }));
-        return response.insertedIds.map((_id, index) => this.document.parse({ _id, ...documents[index] }));
+        return response.insertedIds.map((_id, index) => this.getDoc({ _id, ...documents[index] }));
     }
 
     public async find(filter?: ApiActions.Filter, projection?: ApiActions.Projection, options?: { sort?: ApiActions.Sort; limit?: number; }) {
         const response = await this.api.find<T>(this.getActionPayload({ filter, projection, ...options }));
-        return this.document.parse(response.documents);
+        return response.documents.map(doc => this.getDoc(doc));
     }
 
     public async findOne(filter: ApiActions.Filter, projection?: ApiActions.Projection) {
         const response = await this.api.findOne<T>(this.getActionPayload({ filter, projection }));
-        return response.document ? this.document.parse(response.document) : null;
+        return response.document ? this.getDoc(response.document) : null;
     }
 
     public async findById($oid: string, projection?: ApiActions.Projection) {
-        return this.findOne({ _id: { $oid }}, projection);
+        return this.findOne({ _id: { $oid } }, projection);
     }
 
     public async updateOne(filter: ApiActions.Filter, data: Collection.DocIn<T>) {
@@ -49,7 +45,7 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
     }
 
     public updateById($oid: string, data: Collection.DocIn<T>) {
-        return this.updateOne({ _id: { $oid }}, data);
+        return this.updateOne({ _id: { $oid } }, data);
     }
 
     public async updateMany(filter: ApiActions.Filter, data: Collection.DocIn<T>) {
@@ -64,7 +60,7 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
 
     public async findOneAndUpdate(filter: ApiActions.Filter, data: Collection.DocIn<T>) {
         const doc = await this.findOne(filter, { _id: true });
-        return this.findByIdAndUpdate((doc as any)._id, data);
+        return doc ? this.findByIdAndUpdate(doc.toOriginal()._id, data) : null;
     }
 
     public async deleteOne(filter: ApiActions.Filter) {
@@ -89,18 +85,39 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
 
     public async findOneAndDelete(filter: ApiActions.Filter) {
         const data = await this.findOne(filter, { _id: true });
-        const deletion = data ? await this.deleteById((data as any)._id) : null;
+        const deletion = data ? await this.deleteById(data.toOriginal()._id) : null;
         return deletion ? data : null;
     }
 
     /**
+     * Construct the document result instance
+     *
+     * @param docuemnt
+     * @returns 
+     */
+    private getDoc<L>(docuemnt: L & { _id: string }) {
+        return CollectionDocument.create<T>(this.target, docuemnt);
+    }
+
+    /**
+    * Return document fields for insertion
+    *
+    * @param docuemnt
+    * @returns 
+    */
+    private getInsertionDoc<L>(docuemnt: L & { _id?: undefined }) {
+        return CollectionDocument.parseFields<T>(this.target, docuemnt, true);
+    }
+
+    /**
+     * Build the a action payload object
      *
      * @param name
      * @param args 
      * @returns
      */
     private getActionPayload<L>(custom: L) {
-        return { collection: this.name, ...custom, };
+        return { collection: this.target.__entity__!.name, ...custom, };
     }
 
 }

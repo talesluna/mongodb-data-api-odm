@@ -1,6 +1,7 @@
 declare namespace Collection {
 
     interface EntityField {
+        name: string;
         required: boolean;
     }
 
@@ -14,8 +15,12 @@ declare namespace Collection {
         new(): T;
     }
 
-    type Doc<T> = Omit<T, '_id'> & { _id: string };
-    type DocIn<T> = Omit<T, '_id'>;
+    type Doc<T> = T & {
+        toObject(options?: { getters?: boolean }): T;
+        toOriginal<D = { _id: string }>(): D;
+    };
+
+    type DocIn<T> = Omit<Partial<T>, '_id'>;
 
     interface IConstructor<T> {
         new(target: Collection.EntityConstructor<T>, api: Api.IInstance): IInstance<T>;
@@ -45,7 +50,7 @@ declare namespace Collection {
         deleteById(id: string): Promise<ApiActionResponses.IDelete>;
         deleteMany(filter: ApiActions.Filter<T>): Promise<ApiActionResponses.IDelete>;
         findOneAndDelete(filter: ApiActions.Filter<T>): Promise<Doc<T> | null>;
-        findByIdAndDelete(id: string): Promise<T | null>;
+        findByIdAndDelete(id: string): Promise<Doc<T> | null>;
 
     }
 

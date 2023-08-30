@@ -1,35 +1,102 @@
+type CollectionData = Record<string, any>;
+
 export class CollectionDocument<T> {
 
-    private entity: Collection.Entity;
+    public static create<T>(target: Collection.EntityConstructor<T>, data: CollectionData): Collection.Doc<T> {
 
-    constructor(private target: Collection.EntityConstructor<T>) {
-        this.entity = target.__entity__!;
-    }
+        const fields = this.parseFields<T>(target, data);
 
-    /**
-     * 
-     * @param data
-     * @returns
-     */
-    public parse<L>(data: L): L {
-        if (Array.isArray(data)) {
-            return data.map(data => this.parse(data)) as L;
-        }
+        const doc = new target();
 
-        const doc = new this.target();
-        Object.keys(this.entity.fields).forEach(field => {
+        Object.keys(fields).forEach(field => {
+            Object.defineProperty(doc, field, { value: fields[field], writable: false });
+        })
 
-            const value = (data as never)[field];
-            const config = this.entity.fields[field];
+        // const entity = target.__entity__!;
 
-            if (!value && config.required) {
-                throw new Error(`${this.entity.name}.${field} is required`);
-            }
+        // Object.keys(entity.fields).forEach(field => {
 
-            Object.defineProperty(doc, field, { value, writable: false });
+        //     const { name, required } = entity.fields[field];
 
+        //     const value = (data as never)[name];
+
+        //     if (!value && required) {
+        //         throw new Error(`${entity.name}.${field} is required`);
+        //     }
+
+        //     Object.defineProperty(doc, field, { value, writable: false });
+
+        // });
+
+        Object.defineProperties(doc, {
+            toObject: {
+                writable: false,
+                enumerable: true,
+                value({ getters }: { getters?: boolean } = {}) {
+                    const data: Record<string, any> = {};
+
+                    Object.keys(doc as never).forEach(key => {
+                        if (typeof (doc as never)[key] !== 'function') {
+                            data[key] = (doc as never)[key];
+                        }
+                    });
+
+                    if (getters) {
+                        const proto = Object.getPrototypeOf(doc);
+                        Object.getOwnPropertyNames(proto).forEach(key => {
+                            const desc = Object.getOwnPropertyDescriptor(proto, key);
+                            if (typeof desc?.get === 'function') {
+                                data[key] = desc.get.apply(doc);
+                            }
+                        });
+                    }
+
+                    return data;
+                }
+            },
+            toOriginal: {
+                writable: false,
+                enumerable: true,
+                value() {
+                    return data;
+                }
+            },
         });
 
-        return doc as never as L;
+        return doc as never;
+
     }
+
+    public static parseFields<T>(target: Collection.EntityConstructor<T>, data: CollectionData, insertion = false): CollectionData {
+
+        const doc = {};
+
+        const { __entity__: entity } = target;
+
+        return !entity?.fields ? doc : Object.keys(entity.fields).reduce((doc, field) => {
+
+            const { name, required } = entity.fields[field];
+
+            const valueKey = insertion ? field : name;
+            const fieldKey = insertion ? name : field;
+
+            const value = (data as never)[valueKey];
+
+            if (!value && required) {
+                throw new Error(`${entity.name}.${field} is required`);
+            }
+
+            if (fieldKey === '_id' && insertion && !value) {
+                return doc;
+            }
+
+            return {
+                ...doc,
+                [fieldKey]: value,
+            };
+
+        }, doc);
+
+    }
+
 }

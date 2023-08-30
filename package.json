@@ -1,12 +1,12 @@
 {
   "name": "mongodb-data-api-odm",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "An ODM implementation for Atlas MongoDB Data API",
   "main": "src/index.js",
   "types": "./index.d.ts",
   "typings": "./index.d.ts",
   "scripts": {
-    "build": "rm -rf dist; tsc --build;npm run copy-files",
+    "build": "rm -rf dist; tsc -p ./tsconfig-build.json;npm run copy-files",
     "copy-files": "cp -r ./typings dist; cp index.d.ts README.md LICENSE dist",
     "test": "jest"
   },
@@ -22,7 +22,10 @@
     "axios": "^1.4.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.4",
     "@types/node": "^20.4.9",
+    "jest": "^29.6.4",
+    "ts-jest": "^29.1.1",
     "typescript": "^5.1.6"
   },
   "repository": {

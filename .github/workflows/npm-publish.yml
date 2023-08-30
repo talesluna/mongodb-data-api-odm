@@ -1,42 +1,70 @@
-name: Node.js Package
+name: Release Pull Request
 
 on:
   pull_request: 
     branches: ["master"]
 
 jobs:
-  package:
+  Package:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+
+      - name: Node Version
+        uses: actions/setup-node@v3
         with:
           node-version: 20
-      - run: npm ci
-      - run: npm test
-      - run: PACKAGE_NAME=$(cat package.json | grep 'name' | cut -d '"' -f 4)
-      - run: PACKAGE_VERSION=$(cat package.json | grep 'version' | cut -d '"' -f 4)-${{github.run_number}};
-      - run: npm version $PACKAGE_VERSION
-      - run: npm run build
-      - run: npm pack ./dist
-      - uses: actions/upload-artifact@v3
-        with:
-          name: package
-          path: "$PACKAGE_NAME-$$PACKAGE_VERSION.tgz"
-    
-  publish-npm:
-    needs: package
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@master
+
+      - name: Define package variables (name-version)
+        run: |
+            #bash
+            PACKAGE_NAME=$(cat package.json | grep 'name' | cut -d '"' -f 4)
+            PACKAGE_VERSION=$(cat package.json | grep 'version' | cut -d '"' -f 4)-${{github.run_number}}
+            echo "PACKAGE_FILE=$PACKAGE_NAME-$PACKAGE_VERSION.tgz" >> $GITHUB_ENV
+            npm version $PACKAGE_VERSION --no-commit-hooks --no-git-tag-version --allow-same-version
+
+      - name: Install dependencies (CI)
+        run: npm ci
+
+      - name: Run Unit Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Pack
+        run: |
+          npm pack ./dist
+          mv $PACKAGE_FILE package.tgz
+
+      - name: Upload package file
+        uses: actions/upload-artifact@v3
         with:
           name: package
           path: package.tgz
-      - uses: actions/setup-node@v3
+    
+  Publish:
+    environment: NPM Publish
+    needs: Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download package file
+        uses: actions/download-artifact@master
+        with:
+          name: package
+
+      - name: Node Version
+        uses: actions/setup-node@v3
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
-      - run: tar -xf package.tgz
-      - run: ls package
-        # env:
-          # NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+
+      - name: Decompress package file
+        run: tar -xf package.tgz
+
+      - run: |
+          #bash
+          cd package
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
