@@ -61,7 +61,7 @@ jobs:
       - name: Decompress package file
         run: tar -xf package.tgz
 
-      - run: du -h .
       - run: ls package
-        # env:
-          # NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+      - run: echo ${{env.NODE_AUTH_TOKEN}}
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
