@@ -1,0 +1,42 @@
+name: Node.js Package
+
+on:
+  pull_request: 
+    branches: ["master"]
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm test
+      - run: PACKAGE_NAME=$(cat package.json | grep 'name' | cut -d '"' -f 4)
+      - run: PACKAGE_VERSION=$(cat package.json | grep 'version' | cut -d '"' -f 4)-${{github.run_number}};
+      - run: npm version $PACKAGE_VERSION
+      - run: npm run build
+      - run: npm pack ./dist
+      - uses: actions/upload-artifact@v3
+        with:
+          name: package
+          path: "$PACKAGE_NAME-$$PACKAGE_VERSION.tgz"
+    
+  publish-npm:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@master
+        with:
+          name: package
+          path: package.tgz
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - run: tar -xf package.tgz
+      - run: ls package
+        # env:
+          # NODE_AUTH_TOKEN: ${{secrets.npm_token}}
