@@ -1,6 +1,6 @@
 {
   "name": "mongodb-data-api-odm",
-  "version": "1.0.4",
+  "version": "1.0.2",
   "description": "An ODM implementation for Atlas MongoDB Data API",
   "main": "src/index.js",
   "types": "./index.d.ts",
