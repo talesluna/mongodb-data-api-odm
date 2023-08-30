@@ -45,12 +45,12 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: package
-          path: package.tgz
+          # path: package.tgz
       - uses: actions/setup-node@v3
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
-      - run: tar -xf package.tgz
-      - run: ls package
+      # - run: tar -xf package.tgz
+      - run: ls
         # env:
           # NODE_AUTH_TOKEN: ${{secrets.npm_token}}
