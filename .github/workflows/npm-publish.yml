@@ -62,6 +62,9 @@ jobs:
       - name: Decompress package file
         run: tar -xf package.tgz
 
-      - run: npm publish package
+      - run: |
+          #bash
+          cd package
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
