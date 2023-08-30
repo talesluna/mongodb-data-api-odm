@@ -27,7 +27,7 @@ jobs:
             PACKAGE_NAME=$(cat package.json | grep 'name' | cut -d '"' -f 4)
             PACKAGE_VERSION=$(cat package.json | grep 'version' | cut -d '"' -f 4)-${{github.run_number}}
             echo "PACKAGE_FILE=$PACKAGE_NAME-$PACKAGE_VERSION.tgz" >> $GITHUB_ENV
-            npm version $PACKAGE_VERSION
+            npm version $PACKAGE_VERSION --no-commit-hooks --no-git-tag-version --allow-same-version
 
       - name: Build
         run: npm run build
