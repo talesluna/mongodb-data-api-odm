@@ -14,13 +14,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
-      
-      - name: Install dependencies (CI)
-        run: npm ci
 
-      - name: Run Unit Tests
-        run: npm test
-      
       - name: Define package variables (name-version)
         run: |
             #bash
@@ -29,11 +23,20 @@ jobs:
             echo "PACKAGE_FILE=$PACKAGE_NAME-$PACKAGE_VERSION.tgz" >> $GITHUB_ENV
             npm version $PACKAGE_VERSION --no-commit-hooks --no-git-tag-version --allow-same-version
 
+      - name: Install dependencies (CI)
+        run: npm ci
+
+      - name: Run Unit Tests
+        run: npm test
+
       - name: Build
         run: npm run build
 
-      - run: npm pack ./dist
-      - uses: actions/upload-artifact@v3
+      - name: Pack
+        run: npm pack ./dist
+
+      - name: Upload package file
+        uses: actions/upload-artifact@v3
         with:
           name: package
           path: ${{ env.PACKAGE_FILE }}
@@ -42,15 +45,21 @@ jobs:
     needs: Package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@master
+      - name: Download package file
+        uses: actions/download-artifact@master
         with:
           name: package
           path: package.tgz
-      - uses: actions/setup-node@v3
+
+      - name: Node Version
+        uses: actions/setup-node@v3
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
-      # - run: tar -xf package.tgz
+
+      - name: Decompress package file
+        run: tar -xf package.tgz
+
       - run: du .
         # env:
           # NODE_AUTH_TOKEN: ${{secrets.npm_token}}
