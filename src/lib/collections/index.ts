@@ -10,7 +10,7 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
     constructor(private target: Collection.EntityConstructor<T>, private api: Api.IInstance) { }
 
     public async insert(data: Collection.DocIn<T>) {
-        const document = this.getInsertionDoc(data);
+        const document = this.getInsertionDoc(data, 'insert');
         const response = await this.api.insert(this.getActionPayload({ document }));
         return this.getDoc({ ...document, _id: response.insertedId });
     }
@@ -20,7 +20,7 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
     }
 
     public async insertMany(data: Collection.DocIn<T>[]) {
-        const documents = data.map(doc => this.getInsertionDoc(doc));
+        const documents = data.map(doc => this.getInsertionDoc(doc, 'insert'));
         const response = await this.api.insertMany(this.getActionPayload({ documents }));
         return response.insertedIds.map((_id, index) => this.getDoc({ _id, ...documents[index] }));
     }
@@ -40,7 +40,8 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
     }
 
     public async updateOne(filter: ApiActions.Filter, data: Collection.DocIn<T>) {
-        const response = await this.api.updateOne(this.getActionPayload({ filter, update: { $set: data } }));
+        const $set = this.getInsertionDoc(data, 'update');
+        const response = await this.api.updateOne(this.getActionPayload({ filter, update: { $set } }));
         return response;
     }
 
@@ -49,7 +50,8 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
     }
 
     public async updateMany(filter: ApiActions.Filter, data: Collection.DocIn<T>) {
-        const response = await this.api.updateMany(this.getActionPayload({ filter, update: { $set: data } }));
+        const $set = this.getInsertionDoc(data, 'update');
+        const response = await this.api.updateMany(this.getActionPayload({ filter, update: { $set } }));
         return response;
     }
 
@@ -105,8 +107,8 @@ export class Collection<T = unknown> implements Collection.IInstance<T> {
     * @param docuemnt
     * @returns 
     */
-    private getInsertionDoc<L>(docuemnt: L & { _id?: undefined }) {
-        return CollectionDocument.parseFields<T>(this.target, docuemnt, true);
+    private getInsertionDoc<L>(docuemnt: L & { _id?: undefined }, set: 'update' | 'insert') {
+        return CollectionDocument.parseFields<T>(this.target, docuemnt, set);
     }
 
     /**

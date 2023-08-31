@@ -5,8 +5,14 @@ declare namespace Collection {
         required: boolean;
     }
 
-    interface Entity {
+    interface Config {
         name: string;
+        timestamps?: boolean;
+    }
+
+    interface Entity extends Config {
+        name: string;
+
         fields: Record<string, EntityField>
     }
 

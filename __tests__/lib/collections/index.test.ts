@@ -6,7 +6,7 @@ import { Collection as CollectionDecorator } from '../../../src/lib/collections/
 
 describe('Collection', () => {
 
-    @CollectionDecorator('MockCollection')
+    @CollectionDecorator({ name: 'MockCollection', timestamps: true })
     class MockCollection {
 
         @Field({ name: '_id' })
@@ -83,7 +83,6 @@ describe('Collection', () => {
 
                 spyApiInsert.mockResolvedValue({ insertedId: mockInsertedId });
 
-
                 const data: Partial<MockCollection> = {
                     name: 'jony',
                 };
@@ -94,7 +93,10 @@ describe('Collection', () => {
                 expect(result.name).toEqual(data.name);
                 expect(result.toObject().name).toEqual(data.name);
                 expect(spyApiInsert).toHaveBeenCalledWith(mockCollection['getActionPayload']({
-                    document: CollectionDocument.parseFields(MockCollection, data, true),
+                    document: {
+                        ...CollectionDocument.parseFields(MockCollection, data, 'insert'),
+                        createdAt: expect.any(Date),
+                    }
                 }));
 
             });
@@ -127,7 +129,10 @@ describe('Collection', () => {
                 });
 
                 expect(spyApiInsertMany).toHaveBeenCalledWith(mockCollection['getActionPayload']({
-                    documents: data.map(doc => CollectionDocument.parseFields(MockCollection, doc, true)),
+                    documents: data.map(doc => ({
+                        ...CollectionDocument.parseFields(MockCollection, doc, 'insert'),
+                        createdAt: expect.any(Date),
+                    })),
                 }));
 
             });
@@ -232,7 +237,10 @@ describe('Collection', () => {
                         }
                     },
                     update: {
-                        $set: mockChanges
+                        $set: {
+                            ...CollectionDocument.parseFields(MockCollection, mockChanges, 'update'),
+                            updatedAt: expect.any(Date),
+                        }
                     },
                 }));
 
@@ -258,7 +266,10 @@ describe('Collection', () => {
                 expect(spyApiUpdateMany).toHaveBeenCalledWith(mockCollection['getActionPayload']({
                     filter: mockFilter,
                     update: {
-                        $set: mockChanges
+                        $set: {
+                            ...CollectionDocument.parseFields(MockCollection, mockChanges, 'update'),
+                            updatedAt: expect.any(Date),
+                        }
                     },
                 }));
 

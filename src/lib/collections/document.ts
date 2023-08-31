@@ -10,23 +10,7 @@ export class CollectionDocument<T> {
 
         Object.keys(fields).forEach(field => {
             Object.defineProperty(doc, field, { value: fields[field], writable: false });
-        })
-
-        // const entity = target.__entity__!;
-
-        // Object.keys(entity.fields).forEach(field => {
-
-        //     const { name, required } = entity.fields[field];
-
-        //     const value = (data as never)[name];
-
-        //     if (!value && required) {
-        //         throw new Error(`${entity.name}.${field} is required`);
-        //     }
-
-        //     Object.defineProperty(doc, field, { value, writable: false });
-
-        // });
+        });
 
         Object.defineProperties(doc, {
             toObject: {
@@ -67,26 +51,36 @@ export class CollectionDocument<T> {
 
     }
 
-    public static parseFields<T>(target: Collection.EntityConstructor<T>, data: CollectionData, insertion = false): CollectionData {
+    public static parseFields<T>({ __entity__: entity }: Collection.EntityConstructor<T>, data: CollectionData, set?: 'update' | 'insert'): CollectionData {
 
-        const doc = {};
+        if (!entity || !entity.name || !entity.fields) {
+            return {};
+        }
+        
+        const { fields, name: collectionName, timestamps  } = entity;
 
-        const { __entity__: entity } = target;
+        if (set === 'insert' && timestamps && !data.createdAt) {
+            data.createdAt = new Date();
+        }
 
-        return !entity?.fields ? doc : Object.keys(entity.fields).reduce((doc, field) => {
+        if (set === 'update' && timestamps) {
+            data.updatedAt = new Date();
+        }
 
-            const { name, required } = entity.fields[field];
+        return Object.keys(fields).reduce<CollectionData>((doc, field) => {
 
-            const valueKey = insertion ? field : name;
-            const fieldKey = insertion ? name : field;
+            const { name, required } = fields[field];
+
+            const valueKey = set ? field : name;
+            const fieldKey = set ? name : field;
 
             const value = (data as never)[valueKey];
 
             if (!value && required) {
-                throw new Error(`${entity.name}.${field} is required`);
+                throw new Error(`${collectionName}.${field} is required`);
             }
 
-            if (fieldKey === '_id' && insertion && !value) {
+            if (fieldKey === '_id' && set && !value) {
                 return doc;
             }
 
@@ -95,7 +89,7 @@ export class CollectionDocument<T> {
                 [fieldKey]: value,
             };
 
-        }, doc);
+        }, {});
 
     }
 
